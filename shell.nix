@@ -10,7 +10,7 @@ let
 in
   pkgs.mkShell {
     src = null;
-    name = "black-contracts";
+    name = "olympus-contracts";
     buildInputs = with pkgs; [
       pkgs.dapp
       pkgs.solc-static-versions.solc_0_7_5

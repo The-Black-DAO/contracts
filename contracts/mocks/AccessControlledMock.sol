@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Unlicensed
 pragma solidity 0.7.5;
 
-import "../types/BlackDaoAccessControlled.sol";
+import "../types/OlympusAccessControlled.sol";
 
-contract AccessControlledMock is BlackDaoAccessControlled {
-
-    constructor( address _auth ) BlackDaoAccessControlled(IBlackDaoAuthority(_auth)) {}
+contract AccessControlledMock is OlympusAccessControlled {
+    constructor(address _auth) OlympusAccessControlled(IOlympusAuthority(_auth)) {}
 
     bool public governorOnlyTest;
 
@@ -24,7 +23,7 @@ contract AccessControlledMock is BlackDaoAccessControlled {
         guardianOnlyTest = true;
         return guardianOnlyTest;
     }
-    
+
     function policyTest() external onlyPolicy returns (bool) {
         policyOnlyTest = true;
         return policyOnlyTest;

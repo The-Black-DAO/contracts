@@ -1,10 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { CONTRACTS, INITIAL_MINT } from "../../constants";
-import { BlackDaoERC20Token__factory, BlackDaoTreasury__factory, DAI__factory } from "../../../types";
+import { CONTRACTS, INITIAL_MINT, INITIAL_MINT_PROFIT } from "../../constants";
+import { OlympusERC20Token__factory, OlympusTreasury__factory, DAI__factory } from "../../../types";
 import { waitFor } from "../../txHelper";
 
-const faucetContract = "BlkdFaucet";
+const faucetContract = "OhmFaucet";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const { deployments, getNamedAccounts, network, ethers } = hre;
@@ -18,26 +18,27 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
     const signer = await ethers.provider.getSigner(deployer);
 
-    const blkdDeployment = await deployments.get(CONTRACTS.blkd);
+    const ohmDeployment = await deployments.get(CONTRACTS.ohm);
     const treasuryDeployment = await deployments.get(CONTRACTS.treasury);
     const daiDeployment = await deployments.get(CONTRACTS.DAI);
 
-    const blkd = BlackDaoERC20Token__factory.connect(blkdDeployment.address, signer);
+    const ohm = OlympusERC20Token__factory.connect(ohmDeployment.address, signer);
     const mockDai = DAI__factory.connect(daiDeployment.address, signer);
-    const treasury = BlackDaoTreasury__factory.connect(treasuryDeployment.address, signer);
+    const treasury = OlympusTreasury__factory.connect(treasuryDeployment.address, signer);
 
     // Deploy Faucuet
     await deploy(faucetContract, {
         from: deployer,
-        args: [blkdDeployment.address],
+        args: [ohmDeployment.address],
         log: true,
         skipIfAlreadyDeployed: true,
     });
     const faucetDeployment = await deployments.get(faucetContract);
 
-    let faucetBalance = await blkd.balanceOf(faucetDeployment.address);
-    if (faucetBalance.gt(10000)) {
-        // short circuit if faucet balance is above 10k blkd
+    let faucetBalance = await ohm.balanceOf(faucetDeployment.address);
+    const minOhm = ethers.BigNumber.from(10000 * 1e9);
+    if (faucetBalance.gt(minOhm)) {
+        // short circuit if faucet balance is above 10k ohm
         console.log("Sufficient faucet balance");
         console.log("Faucet Balance: ", faucetBalance.toString());
         return;
@@ -52,22 +53,22 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await waitFor(treasury.enable(0, deployer, ethers.constants.AddressZero)); // Enable the deployer to deposit reserve tokens
     await waitFor(treasury.enable(2, daiDeployment.address, ethers.constants.AddressZero)); // Enable Dai as a reserve Token
 
-    // Deposit and mint blkd
+    // Deposit and mint ohm
     await waitFor(mockDai.approve(treasury.address, daiAmount)); // Approve treasury to use the dai
-    await waitFor(treasury.deposit(daiAmount, daiDeployment.address, 0)); // Deposit Dai into treasury
-    const blkdMinted = await blkd.balanceOf(deployer);
-    console.log("Blkd minted: ", blkdMinted.toString());
+    await waitFor(treasury.deposit(daiAmount, daiDeployment.address, INITIAL_MINT_PROFIT)); // Deposit Dai into treasury, with a profit set, so that we have reserves for staking
+    const ohmMinted = await ohm.balanceOf(deployer);
+    console.log("Ohm minted: ", ohmMinted.toString());
 
     // Fund faucet w/ newly minted dai.
-    await waitFor(blkd.approve(faucetDeployment.address, blkdMinted));
-    await waitFor(blkd.transfer(faucetDeployment.address, blkdMinted));
+    await waitFor(ohm.approve(faucetDeployment.address, ohmMinted));
+    await waitFor(ohm.transfer(faucetDeployment.address, ohmMinted));
 
-    faucetBalance = await blkd.balanceOf(faucetDeployment.address);
+    faucetBalance = await ohm.balanceOf(faucetDeployment.address);
     console.log("Faucet balance:", faucetBalance.toString());
 };
 
 func.tags = ["faucet", "testnet"];
-func.dependencies = [CONTRACTS.blkd, CONTRACTS.DAI, CONTRACTS.treasury];
+func.dependencies = [CONTRACTS.ohm, CONTRACTS.DAI, CONTRACTS.treasury];
 func.runAtTheEnd = true;
 
 export default func;

@@ -1,14 +1,14 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import chai, { expect } from "chai";
 import { ethers } from "hardhat";
 import { FakeContract, smock } from "@defi-wonderland/smock";
 import {
     ITreasury,
-    IBLKD,
+    IOHM,
     Distributor__factory,
     Distributor,
-    BlackDaoAuthority,
-    BlackDaoAuthority__factory,
+    OlympusAuthority,
+    OlympusAuthority__factory,
 } from "../../types";
 
 chai.use(smock.matchers);
@@ -21,16 +21,16 @@ describe("Distributor", () => {
     let governor: SignerWithAddress;
     let guardian: SignerWithAddress;
     let other: SignerWithAddress;
-    let blkdFake: FakeContract<IBLKD>;
+    let ohmFake: FakeContract<IOHM>;
     let treasuryFake: FakeContract<ITreasury>;
     let distributor: Distributor;
-    let authority: BlackDaoAuthority;
+    let authority: OlympusAuthority;
 
     beforeEach(async () => {
         [owner, staking, governor, guardian, other] = await ethers.getSigners();
         treasuryFake = await smock.fake<ITreasury>("ITreasury");
-        blkdFake = await smock.fake<IBLKD>("IBLKD");
-        authority = await (new BlackDaoAuthority__factory(owner)).deploy(
+        ohmFake = await smock.fake<IOHM>("IOHM");
+        authority = await new OlympusAuthority__factory(owner).deploy(
             governor.address,
             guardian.address,
             owner.address,
@@ -42,7 +42,7 @@ describe("Distributor", () => {
         it("constructs correctly", async () => {
             const distributor = await new Distributor__factory(owner).deploy(
                 treasuryFake.address,
-                blkdFake.address,
+                ohmFake.address,
                 staking.address,
                 authority.address
             );
@@ -52,14 +52,14 @@ describe("Distributor", () => {
             await expect(
                 new Distributor__factory(owner).deploy(
                     ZERO_ADDRESS,
-                    blkdFake.address,
+                    ohmFake.address,
                     staking.address,
                     authority.address
                 )
             ).to.be.reverted;
         });
 
-        it("does not accept 0x0 as BLKD address", async () => {
+        it("does not accept 0x0 as OHM address", async () => {
             await expect(
                 new Distributor__factory(owner).deploy(
                     treasuryFake.address,
@@ -74,7 +74,7 @@ describe("Distributor", () => {
             await expect(
                 new Distributor__factory(owner).deploy(
                     treasuryFake.address,
-                    blkdFake.address,
+                    ohmFake.address,
                     ZERO_ADDRESS,
                     authority.address
                 )
@@ -86,7 +86,7 @@ describe("Distributor", () => {
         beforeEach(async () => {
             distributor = await new Distributor__factory(owner).deploy(
                 treasuryFake.address,
-                blkdFake.address,
+                ohmFake.address,
                 staking.address,
                 authority.address
             );
@@ -117,7 +117,7 @@ describe("Distributor", () => {
                 await distributor.connect(governor).addRecipient(staking.address, 2975);
                 await distributor.connect(governor).addRecipient(other.address, 1521);
 
-                blkdFake.totalSupply.returns(10000000);
+                ohmFake.totalSupply.returns(10000000);
                 await distributor.connect(staking).distribute();
 
                 expect(treasuryFake.mint).to.have.been.calledWith(staking.address, 29750);
@@ -262,8 +262,8 @@ describe("Distributor", () => {
         });
 
         describe("nextRewardAt", () => {
-            it("returns the number of BLKD to be distributed in the next epoch", async () => {
-                blkdFake.totalSupply.returns(3899568500546135);
+            it("returns the number of OHM to be distributed in the next epoch", async () => {
+                ohmFake.totalSupply.returns(3899568500546135);
 
                 const rate = 2975;
                 const reward = await distributor.nextRewardAt(rate);
@@ -271,7 +271,7 @@ describe("Distributor", () => {
             });
 
             it("returns zero when rate is zero", async () => {
-                blkdFake.totalSupply.returns(3899568500546135);
+                ohmFake.totalSupply.returns(3899568500546135);
 
                 const rate = 0;
                 const reward = await distributor.nextRewardAt(rate);
@@ -280,17 +280,17 @@ describe("Distributor", () => {
         });
 
         describe("nextRewardFor", () => {
-            it("returns the number of BLKD to be distributed to the given address in the next epoch", async () => {
+            it("returns the number of OHM to be distributed to the given address in the next epoch", async () => {
                 const rate = 2975;
                 await distributor.connect(governor).addRecipient(staking.address, rate);
-                blkdFake.totalSupply.returns(3899568500546135);
+                ohmFake.totalSupply.returns(3899568500546135);
 
                 const reward = await distributor.nextRewardFor(staking.address);
                 expect(reward).to.equal(11601216289124);
             });
 
             it("returns the 0 if the address is not a recipient", async () => {
-                blkdFake.totalSupply.returns(3899568500546135);
+                ohmFake.totalSupply.returns(3899568500546135);
 
                 const reward = await distributor.nextRewardFor(other.address);
                 expect(reward).to.equal(0);
@@ -341,10 +341,10 @@ describe("Distributor", () => {
 
             it("must be done by either governor or guardian", async () => {
                 await distributor.connect(governor).addRecipient(staking.address, 2975);
-                await expect(
-                    distributor.connect(other).removeRecipient(0)
-                ).to.be.revertedWith("Caller is not governor or guardian");
+                await expect(distributor.connect(other).removeRecipient(0)).to.be.revertedWith(
+                    "Caller is not governor or guardian"
+                );
             });
         });
-      });
+    });
 });

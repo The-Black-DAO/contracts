@@ -12,15 +12,15 @@ import "./interfaces/IBondingCalculator.sol";
 import "./interfaces/IUniswapV2ERC20.sol";
 import "./interfaces/IUniswapV2Pair.sol";
 
-contract BlackDaoBondingCalculator is IBondingCalculator {
+contract OlympusBondingCalculator is IBondingCalculator {
     using FixedPoint for *;
     using SafeMath for uint256;
 
-    IERC20 internal immutable BLKD;
+    IERC20 internal immutable OHM;
 
-    constructor(address _BLKD) {
-        require(_BLKD != address(0), "Zero address: BLKD");
-        BLKD = IERC20(_BLKD);
+    constructor(address _OHM) {
+        require(_OHM != address(0), "Zero address: OHM");
+        OHM = IERC20(_OHM);
     }
 
     function getKValue(address _pair) public view returns (uint256 k_) {
@@ -47,12 +47,12 @@ contract BlackDaoBondingCalculator is IBondingCalculator {
         (uint256 reserve0, uint256 reserve1, ) = IUniswapV2Pair(_pair).getReserves();
 
         uint256 reserve;
-        if (IUniswapV2Pair(_pair).token0() == address(BLKD)) {
+        if (IUniswapV2Pair(_pair).token0() == address(OHM)) {
             reserve = reserve1;
         } else {
-            require(IUniswapV2Pair(_pair).token1() == address(BLKD), "Invalid pair");
+            require(IUniswapV2Pair(_pair).token1() == address(OHM), "Invalid pair");
             reserve = reserve0;
         }
-        return reserve.mul(2 * (10**IERC20Metadata(address(BLKD)).decimals())).div(getTotalValue(_pair));
+        return reserve.mul(2 * (10**IERC20Metadata(address(OHM)).decimals())).div(getTotalValue(_pair));
     }
 }

@@ -1,36 +1,36 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import chai, { expect } from "chai";
 import { ethers } from "hardhat";
 const { BigNumber } = ethers;
 import { FakeContract, smock } from "@defi-wonderland/smock";
 import {
     IDistributor,
-    IgBLKD,
-    IsBLKD,
-    IBLKD,
-    BlackDaoStaking,
-    BlackDaoStaking__factory,
-    BlackDaoAuthority,
-    BlackDaoAuthority__factory,
+    IgOHM,
+    IsOHM,
+    IOHM,
+    OlympusStaking,
+    OlympusStaking__factory,
+    OlympusAuthority,
+    OlympusAuthority__factory,
 } from "../../types";
 
 chai.use(smock.matchers);
 
 const ZERO_ADDRESS = ethers.utils.getAddress("0x0000000000000000000000000000000000000000");
 
-describe("BlackDaoStaking", () => {
+describe("OlympusStaking", () => {
     let owner: SignerWithAddress;
     let governor: SignerWithAddress;
     let guardian: SignerWithAddress;
     let alice: SignerWithAddress;
     let bob: SignerWithAddress;
     let other: SignerWithAddress;
-    let blkdFake: FakeContract<IBLKD>;
-    let sBLKDFake: FakeContract<IsBLKD>;
-    let gBLKDFake: FakeContract<IgBLKD>;
+    let ohmFake: FakeContract<IOHM>;
+    let sOHMFake: FakeContract<IsOHM>;
+    let gOHMFake: FakeContract<IgOHM>;
     let distributorFake: FakeContract<IDistributor>;
-    let staking: BlackDaoStaking;
-    let authority: BlackDaoAuthority;
+    let staking: OlympusStaking;
+    let authority: OlympusAuthority;
 
     const EPOCH_LENGTH = 2200;
     const EPOCH_NUMBER = 1;
@@ -38,12 +38,12 @@ describe("BlackDaoStaking", () => {
 
     beforeEach(async () => {
         [owner, governor, guardian, alice, bob, other] = await ethers.getSigners();
-        blkdFake = await smock.fake<IBLKD>("IBLKD");
-        gBLKDFake = await smock.fake<IgBLKD>("IgBLKD");
-        // need to be specific because IsBLKD is also defined in OLD
-        sBLKDFake = await smock.fake<IsBLKD>("contracts/interfaces/IsBLKD.sol:IsBLKD");
+        ohmFake = await smock.fake<IOHM>("IOHM");
+        gOHMFake = await smock.fake<IgOHM>("IgOHM");
+        // need to be specific because IsOHM is also defined in OLD
+        sOHMFake = await smock.fake<IsOHM>("contracts/interfaces/IsOHM.sol:IsOHM");
         distributorFake = await smock.fake<IDistributor>("IDistributor");
-        authority = await new BlackDaoAuthority__factory(owner).deploy(
+        authority = await new OlympusAuthority__factory(owner).deploy(
             governor.address,
             guardian.address,
             owner.address,
@@ -53,18 +53,18 @@ describe("BlackDaoStaking", () => {
 
     describe("constructor", () => {
         it("can be constructed", async () => {
-            staking = await new BlackDaoStaking__factory(owner).deploy(
-                blkdFake.address,
-                sBLKDFake.address,
-                gBLKDFake.address,
+            staking = await new OlympusStaking__factory(owner).deploy(
+                ohmFake.address,
+                sOHMFake.address,
+                gOHMFake.address,
                 EPOCH_LENGTH,
                 EPOCH_NUMBER,
                 FUTURE_END_TIME,
                 authority.address
             );
 
-            expect(await staking.BLKD()).to.equal(blkdFake.address);
-            expect(await staking.sBLKD()).to.equal(sBLKDFake.address);
+            expect(await staking.OHM()).to.equal(ohmFake.address);
+            expect(await staking.sOHM()).to.equal(sOHMFake.address);
             const epoch = await staking.epoch();
             expect((epoch as any)._length).to.equal(BigNumber.from(EPOCH_LENGTH));
             expect(epoch.number).to.equal(BigNumber.from(EPOCH_NUMBER));
@@ -73,12 +73,12 @@ describe("BlackDaoStaking", () => {
             expect(await authority.governor()).to.equal(governor.address);
         });
 
-        it("will not allow a 0x0 BLKD address", async () => {
+        it("will not allow a 0x0 OHM address", async () => {
             await expect(
-                new BlackDaoStaking__factory(owner).deploy(
+                new OlympusStaking__factory(owner).deploy(
                     ZERO_ADDRESS,
-                    sBLKDFake.address,
-                    gBLKDFake.address,
+                    sOHMFake.address,
+                    gOHMFake.address,
                     EPOCH_LENGTH,
                     EPOCH_NUMBER,
                     FUTURE_END_TIME,
@@ -87,12 +87,12 @@ describe("BlackDaoStaking", () => {
             ).to.be.reverted;
         });
 
-        it("will not allow a 0x0 sBLKD address", async () => {
+        it("will not allow a 0x0 sOHM address", async () => {
             await expect(
-                new BlackDaoStaking__factory(owner).deploy(
-                    blkdFake.address,
+                new OlympusStaking__factory(owner).deploy(
+                    ohmFake.address,
                     ZERO_ADDRESS,
-                    gBLKDFake.address,
+                    gOHMFake.address,
                     EPOCH_LENGTH,
                     EPOCH_NUMBER,
                     FUTURE_END_TIME,
@@ -101,11 +101,11 @@ describe("BlackDaoStaking", () => {
             ).to.be.reverted;
         });
 
-        it("will not allow a 0x0 gBLKD address", async () => {
+        it("will not allow a 0x0 gOHM address", async () => {
             await expect(
-                new BlackDaoStaking__factory(owner).deploy(
-                    blkdFake.address,
-                    sBLKDFake.address,
+                new OlympusStaking__factory(owner).deploy(
+                    ohmFake.address,
+                    sOHMFake.address,
                     ZERO_ADDRESS,
                     EPOCH_LENGTH,
                     EPOCH_NUMBER,
@@ -118,10 +118,10 @@ describe("BlackDaoStaking", () => {
 
     describe("initialization", () => {
         beforeEach(async () => {
-            staking = await new BlackDaoStaking__factory(owner).deploy(
-                blkdFake.address,
-                sBLKDFake.address,
-                gBLKDFake.address,
+            staking = await new OlympusStaking__factory(owner).deploy(
+                ohmFake.address,
+                sOHMFake.address,
+                gOHMFake.address,
                 EPOCH_LENGTH,
                 EPOCH_NUMBER,
                 FUTURE_END_TIME,
@@ -168,10 +168,10 @@ describe("BlackDaoStaking", () => {
 
     describe("post-initialization", () => {
         async function deployStaking(nextRebaseBlock: any) {
-            staking = await new BlackDaoStaking__factory(owner).deploy(
-                blkdFake.address,
-                sBLKDFake.address,
-                gBLKDFake.address,
+            staking = await new OlympusStaking__factory(owner).deploy(
+                ohmFake.address,
+                sOHMFake.address,
+                gOHMFake.address,
                 EPOCH_LENGTH,
                 EPOCH_NUMBER,
                 nextRebaseBlock,
@@ -194,11 +194,11 @@ describe("BlackDaoStaking", () => {
                 const rebasing = true;
                 const claim = false;
 
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.gonsForBalance.whenCalledWith(amount).returns(gons);
-                sBLKDFake.balanceForGons.whenCalledWith(gons).returns(amount);
+                sOHMFake.gonsForBalance.whenCalledWith(amount).returns(gons);
+                sOHMFake.balanceForGons.whenCalledWith(gons).returns(amount);
 
                 await staking.connect(alice).stake(alice.address, amount, rebasing, claim);
 
@@ -212,37 +212,37 @@ describe("BlackDaoStaking", () => {
                 expect(warmupInfo.lock).to.equal(false);
             });
 
-            it("exchanges BLKD for sBLKD when claim is true and rebasing is true", async () => {
+            it("exchanges OHM for sOHM when claim is true and rebasing is true", async () => {
                 const amount = 1000;
                 const rebasing = true;
                 const claim = true;
 
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.transfer.whenCalledWith(alice.address, amount).returns(true);
+                sOHMFake.transfer.whenCalledWith(alice.address, amount).returns(true);
 
                 await staking.connect(alice).stake(alice.address, amount, rebasing, claim);
 
                 // nothing is in warmup
-                sBLKDFake.balanceForGons.whenCalledWith(0).returns(0);
+                sOHMFake.balanceForGons.whenCalledWith(0).returns(0);
                 expect(await staking.supplyInWarmup()).to.equal(0);
             });
 
-            it("exchanges BLKD for newly minted gBLKD when claim is true and rebasing is true", async () => {
+            it("exchanges OHM for newly minted gOHM when claim is true and rebasing is true", async () => {
                 const amount = 1000;
                 const indexedAmount = 10000;
                 const rebasing = false;
                 const claim = true;
 
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                gBLKDFake.balanceTo.whenCalledWith(amount).returns(indexedAmount);
+                gOHMFake.balanceTo.whenCalledWith(amount).returns(indexedAmount);
 
                 await staking.connect(alice).stake(alice.address, amount, rebasing, claim);
 
-                expect(gBLKDFake.mint).to.be.calledWith(alice.address, indexedAmount);
+                expect(gOHMFake.mint).to.be.calledWith(alice.address, indexedAmount);
             });
 
             it("adds amount to warmup when claim is true and warmup period > 0, regardless of rebasing", async () => {
@@ -252,11 +252,11 @@ describe("BlackDaoStaking", () => {
                 const rebasing = true;
                 const claim = true;
 
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.gonsForBalance.whenCalledWith(amount).returns(gons);
-                sBLKDFake.balanceForGons.whenCalledWith(gons).returns(amount);
+                sOHMFake.gonsForBalance.whenCalledWith(amount).returns(gons);
+                sOHMFake.balanceForGons.whenCalledWith(gons).returns(amount);
 
                 await staking.connect(governor).setWarmupLength(1);
                 await staking.connect(alice).stake(alice.address, amount, true, true);
@@ -276,10 +276,10 @@ describe("BlackDaoStaking", () => {
                 const rebasing = false;
                 const claim = false;
 
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.gonsForBalance.whenCalledWith(amount).returns(gons);
+                sOHMFake.gonsForBalance.whenCalledWith(amount).returns(gons);
 
                 await staking.connect(alice).toggleLock();
 
@@ -294,11 +294,11 @@ describe("BlackDaoStaking", () => {
                 const rebasing = false;
                 const claim = false;
 
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.gonsForBalance.whenCalledWith(amount).returns(gons);
-                sBLKDFake.balanceForGons.whenCalledWith(gons).returns(amount);
+                sOHMFake.gonsForBalance.whenCalledWith(amount).returns(gons);
+                sOHMFake.balanceForGons.whenCalledWith(gons).returns(amount);
 
                 await staking.connect(alice).toggleLock();
 
@@ -312,41 +312,41 @@ describe("BlackDaoStaking", () => {
             async function createClaim(wallet: SignerWithAddress, amount: number, gons: number) {
                 const rebasing = true;
                 const claim = false;
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.gonsForBalance.whenCalledWith(amount).returns(gons);
+                sOHMFake.gonsForBalance.whenCalledWith(amount).returns(gons);
                 await staking.connect(wallet).stake(wallet.address, amount, rebasing, claim);
             }
 
-            it("transfers sBLKD when rebasing is true", async () => {
+            it("transfers sOHM when rebasing is true", async () => {
                 const amount = 1000;
                 const gons = 10;
                 await createClaim(alice, amount, gons);
 
-                sBLKDFake.transfer.whenCalledWith(alice.address, amount).returns(true);
-                sBLKDFake.balanceForGons.whenCalledWith(gons).returns(amount);
+                sOHMFake.transfer.whenCalledWith(alice.address, amount).returns(true);
+                sOHMFake.balanceForGons.whenCalledWith(gons).returns(amount);
 
                 await staking.connect(alice).claim(alice.address, true);
 
-                sBLKDFake.balanceForGons.whenCalledWith(0).returns(0);
+                sOHMFake.balanceForGons.whenCalledWith(0).returns(0);
                 expect(await staking.supplyInWarmup()).to.equal(0);
             });
 
-            it("mints gBLKD when rebasing is false", async () => {
+            it("mints gOHM when rebasing is false", async () => {
                 const indexedAmount = 10000;
                 const amount = 1000;
                 const gons = 10;
                 await createClaim(alice, amount, gons);
 
-                gBLKDFake.balanceTo.whenCalledWith(amount).returns(indexedAmount);
-                sBLKDFake.balanceForGons.whenCalledWith(gons).returns(amount);
+                gOHMFake.balanceTo.whenCalledWith(amount).returns(indexedAmount);
+                sOHMFake.balanceForGons.whenCalledWith(gons).returns(amount);
 
                 await staking.connect(alice).claim(alice.address, false);
 
-                expect(gBLKDFake.mint).to.be.calledWith(alice.address, indexedAmount);
+                expect(gOHMFake.mint).to.be.calledWith(alice.address, indexedAmount);
 
-                sBLKDFake.balanceForGons.whenCalledWith(0).returns(0);
+                sOHMFake.balanceForGons.whenCalledWith(0).returns(0);
                 expect(await staking.supplyInWarmup()).to.equal(0);
             });
 
@@ -367,20 +367,20 @@ describe("BlackDaoStaking", () => {
                 await createClaim(alice, amount, gons);
                 await staking.connect(alice).toggleLock();
 
-                sBLKDFake.transfer.whenCalledWith(alice.address, amount).returns(true);
-                sBLKDFake.balanceForGons.whenCalledWith(gons).returns(amount);
+                sOHMFake.transfer.whenCalledWith(alice.address, amount).returns(true);
+                sOHMFake.balanceForGons.whenCalledWith(gons).returns(amount);
 
                 await staking.connect(alice).claim(alice.address, true);
 
-                sBLKDFake.balanceForGons.whenCalledWith(0).returns(0);
+                sOHMFake.balanceForGons.whenCalledWith(0).returns(0);
                 expect(await staking.supplyInWarmup()).to.equal(0);
             });
 
             it("does nothing when there is nothing to claim", async () => {
                 await staking.connect(bob).claim(bob.address, true);
 
-                expect(sBLKDFake.transfer).to.not.have.been.called;
-                expect(gBLKDFake.mint).to.not.have.been.called;
+                expect(sOHMFake.transfer).to.not.have.been.called;
+                expect(gOHMFake.mint).to.not.have.been.called;
             });
 
             it("does nothing when the warmup isn't over", async () => {
@@ -389,8 +389,8 @@ describe("BlackDaoStaking", () => {
 
                 await staking.connect(alice).claim(alice.address, true);
 
-                expect(sBLKDFake.transfer).to.not.have.been.called;
-                expect(gBLKDFake.mint).to.not.have.been.called;
+                expect(sOHMFake.transfer).to.not.have.been.called;
+                expect(gOHMFake.mint).to.not.have.been.called;
             });
         });
 
@@ -404,88 +404,88 @@ describe("BlackDaoStaking", () => {
                 gons = 10;
                 const rebasing = true;
                 const claim = false;
-                blkdFake.transferFrom
+                ohmFake.transferFrom
                     .whenCalledWith(alice.address, staking.address, amount)
                     .returns(true);
-                sBLKDFake.gonsForBalance.whenCalledWith(amount).returns(gons);
+                sOHMFake.gonsForBalance.whenCalledWith(amount).returns(gons);
 
                 await staking.connect(alice).stake(alice.address, amount, rebasing, claim);
             });
 
-            it("removes stake from warmup and returns BLKD", async () => {
-                blkdFake.transfer.returns(true);
+            it("removes stake from warmup and returns OHM", async () => {
+                ohmFake.transfer.returns(true);
 
                 await staking.connect(alice).forfeit();
 
-                expect(blkdFake.transfer).to.be.calledWith(alice.address, amount);
+                expect(ohmFake.transfer).to.be.calledWith(alice.address, amount);
 
-                sBLKDFake.balanceForGons.whenCalledWith(0).returns(0);
+                sOHMFake.balanceForGons.whenCalledWith(0).returns(0);
                 expect(await staking.supplyInWarmup()).to.equal(0);
             });
 
             it("transfers zero if there is no balance in warmup", async () => {
-                blkdFake.transfer.returns(true);
+                ohmFake.transfer.returns(true);
 
                 await staking.connect(bob).forfeit();
 
-                expect(blkdFake.transfer).to.be.calledWith(bob.address, 0);
+                expect(ohmFake.transfer).to.be.calledWith(bob.address, 0);
             });
         });
 
         describe("unstake", () => {
-            it("can redeem sBLKD for BLKD", async () => {
+            it("can redeem sOHM for OHM", async () => {
                 const amount = 1000;
                 const rebasing = true;
                 const claim = true;
 
-                blkdFake.transferFrom.returns(true);
-                blkdFake.balanceOf.returns(amount);
-                sBLKDFake.transfer.returns(true);
+                ohmFake.transferFrom.returns(true);
+                ohmFake.balanceOf.returns(amount);
+                sOHMFake.transfer.returns(true);
                 await staking.connect(alice).stake(alice.address, amount, rebasing, claim);
 
-                sBLKDFake.transferFrom.returns(true);
-                blkdFake.transfer.returns(true);
+                sOHMFake.transferFrom.returns(true);
+                ohmFake.transfer.returns(true);
                 await staking.connect(alice).unstake(alice.address, amount, false, rebasing);
 
-                expect(sBLKDFake.transferFrom).to.be.calledWith(
+                expect(sOHMFake.transferFrom).to.be.calledWith(
                     alice.address,
                     staking.address,
                     amount
                 );
-                expect(blkdFake.transfer).to.be.calledWith(alice.address, amount);
+                expect(ohmFake.transfer).to.be.calledWith(alice.address, amount);
             });
 
-            it("can redeem gBLKD for BLKD", async () => {
+            it("can redeem gOHM for OHM", async () => {
                 const amount = 1000;
                 const indexedAmount = 10000;
                 const rebasing = false;
                 const claim = true;
 
-                blkdFake.transferFrom.returns(true);
+                ohmFake.transferFrom.returns(true);
                 await staking.connect(alice).stake(alice.address, amount, rebasing, claim);
 
-                gBLKDFake.balanceFrom.whenCalledWith(indexedAmount).returns(amount);
-                blkdFake.transfer.returns(true);
-                blkdFake.balanceOf.returns(amount);
+                gOHMFake.balanceFrom.whenCalledWith(indexedAmount).returns(amount);
+                ohmFake.transfer.returns(true);
+                ohmFake.balanceOf.returns(amount);
                 await staking.connect(alice).unstake(alice.address, indexedAmount, false, rebasing);
 
-                expect(blkdFake.transfer).to.be.calledWith(alice.address, amount);
-                expect(gBLKDFake.burn).to.be.calledWith(alice.address, indexedAmount);
+                expect(ohmFake.transfer).to.be.calledWith(alice.address, amount);
+                expect(gOHMFake.burn).to.be.calledWith(alice.address, indexedAmount);
             });
         });
 
         describe("wrap", () => {
-            it("converts sBLKD into gBLKD", async () => {
+            it("converts sOHM into gOHM", async () => {
                 const amount = 1000;
                 const indexedAmount = 10000;
 
-                gBLKDFake.balanceTo.whenCalledWith(amount).returns(indexedAmount);
-                sBLKDFake.transferFrom.returns(true);
+                gOHMFake.balanceTo.whenCalledWith(amount).returns(indexedAmount);
+                sOHMFake.transferFrom.returns(true);
 
                 await staking.connect(alice).wrap(alice.address, amount);
 
-                expect(gBLKDFake.mint).to.be.calledWith(alice.address, indexedAmount);
-                expect(sBLKDFake.transferFrom).to.be.calledWith(
+                expect(gOHMFake.mint).to.be.calledWith(alice.address, indexedAmount);
+                expect(sOHMFake.transferFrom).to.be.calledWith(
                     alice.address,
                     staking.address,
                     amount
@@ -494,17 +494,17 @@ describe("BlackDaoStaking", () => {
         });
 
         describe("unwrap", () => {
-            it("converts gBLKD into sBLKD", async () => {
+            it("converts gOHM into sOHM", async () => {
                 const amount = 1000;
                 const indexedAmount = 10000;
 
-                gBLKDFake.balanceFrom.whenCalledWith(indexedAmount).returns(amount);
-                sBLKDFake.transfer.returns(true);
+                gOHMFake.balanceFrom.whenCalledWith(indexedAmount).returns(amount);
+                sOHMFake.transfer.returns(true);
 
                 await staking.connect(alice).unwrap(alice.address, indexedAmount);
 
-                expect(gBLKDFake.burn).to.be.calledWith(alice.address, indexedAmount);
-                expect(sBLKDFake.transfer).to.be.calledWith(alice.address, amount);
+                expect(gOHMFake.burn).to.be.calledWith(alice.address, indexedAmount);
+                expect(sOHMFake.transfer).to.be.calledWith(alice.address, amount);
             });
         });
 
@@ -536,14 +536,14 @@ describe("BlackDaoStaking", () => {
                 );
             });
 
-            it("when the BLKD balance of the staking contract equals sBLKD supply, distribute zero", async () => {
+            it("when the OHM balance of the staking contract equals sOHM supply, distribute zero", async () => {
                 const currentBlock = await ethers.provider.send("eth_blockNumber", []);
                 await deployStaking(currentBlock);
                 const epoch = await staking.epoch();
                 expect(BigNumber.from(currentBlock)).to.equal(BigNumber.from(epoch.end));
 
-                blkdFake.balanceOf.whenCalledWith(staking.address).returns(10);
-                sBLKDFake.circulatingSupply.returns(10);
+                ohmFake.balanceOf.whenCalledWith(staking.address).returns(10);
+                sOHMFake.circulatingSupply.returns(10);
                 await staking.connect(alice).rebase();
 
                 const nextEpoch = await staking.epoch();
@@ -556,8 +556,8 @@ describe("BlackDaoStaking", () => {
                 const epoch = await staking.epoch();
                 expect(BigNumber.from(currentBlock)).to.equal(BigNumber.from(epoch.end));
 
-                blkdFake.balanceOf.whenCalledWith(staking.address).returns(10);
-                sBLKDFake.circulatingSupply.returns(5);
+                ohmFake.balanceOf.whenCalledWith(staking.address).returns(10);
+                sOHMFake.circulatingSupply.returns(5);
                 await staking.connect(alice).rebase();
 
                 const nextEpoch = await staking.epoch();

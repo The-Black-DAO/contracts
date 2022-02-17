@@ -5,19 +5,19 @@ import "./libraries/SafeMath.sol";
 import "./libraries/SafeERC20.sol";
 
 import "./interfaces/IERC20.sol";
-import "./interfaces/IsBLKD.sol";
-import "./interfaces/IgBLKD.sol";
+import "./interfaces/IsOHM.sol";
+import "./interfaces/IgOHM.sol";
 import "./interfaces/IDistributor.sol";
 
-import "./types/BlackDaoAccessControlled.sol";
+import "./types/OlympusAccessControlled.sol";
 
-contract BlackDaoStaking is BlackDaoAccessControlled {
+contract OlympusStaking is OlympusAccessControlled {
     /* ========== DEPENDENCIES ========== */
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    using SafeERC20 for IsBLKD;
-    using SafeERC20 for IgBLKD;
+    using SafeERC20 for IsOHM;
+    using SafeERC20 for IgOHM;
 
     /* ========== EVENTS ========== */
 
@@ -42,9 +42,9 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20 public immutable BLKD;
-    IsBLKD public immutable sBLKD;
-    IgBLKD public immutable gBLKD;
+    IERC20 public immutable OHM;
+    IsOHM public immutable sOHM;
+    IgOHM public immutable gOHM;
 
     Epoch public epoch;
 
@@ -57,20 +57,20 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        address _blkd,
-        address _sBLKD,
-        address _gBLKD,
+        address _ohm,
+        address _sOHM,
+        address _gOHM,
         uint256 _epochLength,
         uint256 _firstEpochNumber,
         uint256 _firstEpochTime,
         address _authority
-    ) BlackDaoAccessControlled(IBlackDaoAuthority(_authority)) {
-        require(_blkd != address(0), "Zero address: BLKD");
-        BLKD = IERC20(_blkd);
-        require(_sBLKD != address(0), "Zero address: sBLKD");
-        sBLKD = IsBLKD(_sBLKD);
-        require(_gBLKD != address(0), "Zero address: gBLKD");
-        gBLKD = IgBLKD(_gBLKD);
+    ) OlympusAccessControlled(IOlympusAuthority(_authority)) {
+        require(_ohm != address(0), "Zero address: OHM");
+        OHM = IERC20(_ohm);
+        require(_sOHM != address(0), "Zero address: sOHM");
+        sOHM = IsOHM(_sOHM);
+        require(_gOHM != address(0), "Zero address: gOHM");
+        gOHM = IgOHM(_gOHM);
 
         epoch = Epoch({length: _epochLength, number: _firstEpochNumber, end: _firstEpochTime, distribute: 0});
     }
@@ -78,7 +78,7 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @notice stake BLKD to enter warmup
+     * @notice stake OHM to enter warmup
      * @param _to address
      * @param _amount uint
      * @param _claim bool
@@ -91,7 +91,7 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
         bool _rebasing,
         bool _claim
     ) external returns (uint256) {
-        BLKD.safeTransferFrom(msg.sender, address(this), _amount);
+        OHM.safeTransferFrom(msg.sender, address(this), _amount);
         _amount = _amount.add(rebase()); // add bounty if rebase occurred
         if (_claim && warmupPeriod == 0) {
             return _send(_to, _amount, _rebasing);
@@ -103,12 +103,12 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
 
             warmupInfo[_to] = Claim({
                 deposit: info.deposit.add(_amount),
-                gons: info.gons.add(sBLKD.gonsForBalance(_amount)),
+                gons: info.gons.add(sOHM.gonsForBalance(_amount)),
                 expiry: epoch.number.add(warmupPeriod),
                 lock: info.lock
             });
 
-            gonsInWarmup = gonsInWarmup.add(sBLKD.gonsForBalance(_amount));
+            gonsInWarmup = gonsInWarmup.add(sOHM.gonsForBalance(_amount));
 
             return _amount;
         }
@@ -132,13 +132,13 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
 
             gonsInWarmup = gonsInWarmup.sub(info.gons);
 
-            return _send(_to, sBLKD.balanceForGons(info.gons), _rebasing);
+            return _send(_to, sOHM.balanceForGons(info.gons), _rebasing);
         }
         return 0;
     }
 
     /**
-     * @notice forfeit stake and retrieve BLKD
+     * @notice forfeit stake and retrieve OHM
      * @return uint
      */
     function forfeit() external returns (uint256) {
@@ -147,7 +147,7 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
 
         gonsInWarmup = gonsInWarmup.sub(info.gons);
 
-        BLKD.safeTransfer(msg.sender, info.deposit);
+        OHM.safeTransfer(msg.sender, info.deposit);
 
         return info.deposit;
     }
@@ -160,7 +160,7 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
     }
 
     /**
-     * @notice redeem sBLKD for BLKDs
+     * @notice redeem sOHM for OHMs
      * @param _to address
      * @param _amount uint
      * @param _trigger bool
@@ -179,39 +179,39 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
             bounty = rebase();
         }
         if (_rebasing) {
-            sBLKD.safeTransferFrom(msg.sender, address(this), _amount);
+            sOHM.safeTransferFrom(msg.sender, address(this), _amount);
             amount_ = amount_.add(bounty);
         } else {
-            gBLKD.burn(msg.sender, _amount); // amount was given in gBLKD terms
-            amount_ = gBLKD.balanceFrom(amount_).add(bounty); // convert amount to BLKD terms & add bounty
+            gOHM.burn(msg.sender, _amount); // amount was given in gOHM terms
+            amount_ = gOHM.balanceFrom(amount_).add(bounty); // convert amount to OHM terms & add bounty
         }
 
-        require(amount_ <= BLKD.balanceOf(address(this)), "Insufficient BLKD balance in contract");
-        BLKD.safeTransfer(_to, amount_);
+        require(amount_ <= OHM.balanceOf(address(this)), "Insufficient OHM balance in contract");
+        OHM.safeTransfer(_to, amount_);
     }
 
     /**
-     * @notice convert _amount sBLKD into gBalance_ gBLKD
+     * @notice convert _amount sOHM into gBalance_ gOHM
      * @param _to address
      * @param _amount uint
      * @return gBalance_ uint
      */
     function wrap(address _to, uint256 _amount) external returns (uint256 gBalance_) {
-        sBLKD.safeTransferFrom(msg.sender, address(this), _amount);
-        gBalance_ = gBLKD.balanceTo(_amount);
-        gBLKD.mint(_to, gBalance_);
+        sOHM.safeTransferFrom(msg.sender, address(this), _amount);
+        gBalance_ = gOHM.balanceTo(_amount);
+        gOHM.mint(_to, gBalance_);
     }
 
     /**
-     * @notice convert _amount gBLKD into sBalance_ sBLKD
+     * @notice convert _amount gOHM into sBalance_ sOHM
      * @param _to address
      * @param _amount uint
      * @return sBalance_ uint
      */
     function unwrap(address _to, uint256 _amount) external returns (uint256 sBalance_) {
-        gBLKD.burn(msg.sender, _amount);
-        sBalance_ = gBLKD.balanceFrom(_amount);
-        sBLKD.safeTransfer(_to, sBalance_);
+        gOHM.burn(msg.sender, _amount);
+        sBalance_ = gOHM.balanceFrom(_amount);
+        sOHM.safeTransfer(_to, sBalance_);
     }
 
     /**
@@ -221,17 +221,17 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
     function rebase() public returns (uint256) {
         uint256 bounty;
         if (epoch.end <= block.timestamp) {
-            sBLKD.rebase(epoch.distribute, epoch.number);
+            sOHM.rebase(epoch.distribute, epoch.number);
 
             epoch.end = epoch.end.add(epoch.length);
             epoch.number++;
 
             if (address(distributor) != address(0)) {
                 distributor.distribute();
-                bounty = distributor.retrieveBounty(); // Will mint blkd for this contract if there exists a bounty
+                bounty = distributor.retrieveBounty(); // Will mint ohm for this contract if there exists a bounty
             }
-            uint256 balance = BLKD.balanceOf(address(this));
-            uint256 staked = sBLKD.circulatingSupply();
+            uint256 balance = OHM.balanceOf(address(this));
+            uint256 staked = sOHM.circulatingSupply();
             if (balance <= staked.add(bounty)) {
                 epoch.distribute = 0;
             } else {
@@ -244,7 +244,7 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
     /* ========== INTERNAL FUNCTIONS ========== */
 
     /**
-     * @notice send staker their amount as sBLKD or gBLKD
+     * @notice send staker their amount as sOHM or gOHM
      * @param _to address
      * @param _amount uint
      * @param _rebasing bool
@@ -255,29 +255,29 @@ contract BlackDaoStaking is BlackDaoAccessControlled {
         bool _rebasing
     ) internal returns (uint256) {
         if (_rebasing) {
-            sBLKD.safeTransfer(_to, _amount); // send as sBLKD (equal unit as BLKD)
+            sOHM.safeTransfer(_to, _amount); // send as sOHM (equal unit as OHM)
             return _amount;
         } else {
-            gBLKD.mint(_to, gBLKD.balanceTo(_amount)); // send as gBLKD (convert units from BLKD)
-            return gBLKD.balanceTo(_amount);
+            gOHM.mint(_to, gOHM.balanceTo(_amount)); // send as gOHM (convert units from OHM)
+            return gOHM.balanceTo(_amount);
         }
     }
 
     /* ========== VIEW FUNCTIONS ========== */
 
     /**
-     * @notice returns the sBLKD index, which tracks rebase growth
+     * @notice returns the sOHM index, which tracks rebase growth
      * @return uint
      */
     function index() public view returns (uint256) {
-        return sBLKD.index();
+        return sOHM.index();
     }
 
     /**
      * @notice total supply in warmup
      */
     function supplyInWarmup() public view returns (uint256) {
-        return sBLKD.balanceForGons(gonsInWarmup);
+        return sOHM.balanceForGons(gonsInWarmup);
     }
 
     /**

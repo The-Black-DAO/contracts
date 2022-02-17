@@ -1,47 +1,56 @@
 const { ethers } = require("hardhat");
 
 async function main() {
-
     const [deployer] = await ethers.getSigners();
-    console.log('Deploying contracts with the account: ' + deployer.address);
-
+    console.log("Deploying contracts with the account: " + deployer.address);
 
     const firstEpochNumber = "";
     const firstBlockNumber = "";
-    const gBLKD = "";
+    const gOHM = "";
     const authority = "";
 
-    const BLKD = await ethers.getContractFactory('BlackDaoERC20Token');
-    const blkd = await BLKD.deploy(authority);
+    const OHM = await ethers.getContractFactory("OlympusERC20Token");
+    const ohm = await OHM.deploy(authority);
 
-    const BlackDaoTreasury = await ethers.getContractFactory('BlackDaoTreasury');
-    const blackTreasury = await BlackDaoTreasury.deploy(blkd.address, '0', authority);
+    const OlympusTreasury = await ethers.getContractFactory("OlympusTreasury");
+    const olympusTreasury = await OlympusTreasury.deploy(ohm.address, "0", authority);
 
-    const SBLKD = await ethers.getContractFactory('sBlackDao');
-    const sBLKD = await SBLKD.deploy();
+    const SOHM = await ethers.getContractFactory("sOlympus");
+    const sOHM = await SOHM.deploy();
 
-    const BlackDaoStaking = await ethers.getContractFactory('BlackDaoStaking');
-    const staking = await BlackDaoStaking.deploy(blkd.address, sBLKD.address, gBLKD, '2200', firstEpochNumber, firstBlockNumber, authority);
+    const OlympusStaking = await ethers.getContractFactory("OlympusStaking");
+    const staking = await OlympusStaking.deploy(
+        ohm.address,
+        sOHM.address,
+        gOHM,
+        "2200",
+        firstEpochNumber,
+        firstBlockNumber,
+        authority
+    );
 
-    const Distributor = await ethers.getContractFactory('Distributor');
-    const distributor = await Distributor.deploy(blackTreasury.address, blkd.address, staking.address, authority );
+    const Distributor = await ethers.getContractFactory("Distributor");
+    const distributor = await Distributor.deploy(
+        olympusTreasury.address,
+        ohm.address,
+        staking.address,
+        authority
+    );
 
-    await sBLKD.setIndex('');
-    await sBLKD.setgBLKD(gBLKD);
-    await sBLKD.initialize(staking.address, blackTreasury.address);
-    
+    await sOHM.setIndex("");
+    await sOHM.setgOHM(gOHM);
+    await sOHM.initialize(staking.address, olympusTreasury.address);
 
-
-    console.log("BLKD: " + blkd.address);
-    console.log("BlackDao Treasury: " + blackTreasury.address);
-    console.log("Staked BlackDao: " + sBLKD.address);
+    console.log("OHM: " + ohm.address);
+    console.log("Olympus Treasury: " + olympusTreasury.address);
+    console.log("Staked Olympus: " + sOHM.address);
     console.log("Staking Contract: " + staking.address);
     console.log("Distributor: " + distributor.address);
 }
 
 main()
     .then(() => process.exit())
-    .catch(error => {
+    .catch((error) => {
         console.error(error);
         process.exit(1);
-})
+    });

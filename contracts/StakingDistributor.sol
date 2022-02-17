@@ -8,9 +8,9 @@ import "./interfaces/IERC20.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IDistributor.sol";
 
-import "./types/BlackDaoAccessControlled.sol";
+import "./types/OlympusAccessControlled.sol";
 
-contract Distributor is IDistributor, BlackDaoAccessControlled {
+contract Distributor is IDistributor, OlympusAccessControlled {
     /* ========== DEPENDENCIES ========== */
 
     using SafeMath for uint256;
@@ -18,7 +18,7 @@ contract Distributor is IDistributor, BlackDaoAccessControlled {
 
     /* ====== VARIABLES ====== */
 
-    IERC20 private immutable blkd;
+    IERC20 private immutable ohm;
     ITreasury private immutable treasury;
     address private immutable staking;
 
@@ -45,14 +45,14 @@ contract Distributor is IDistributor, BlackDaoAccessControlled {
 
     constructor(
         address _treasury,
-        address _blkd,
+        address _ohm,
         address _staking,
         address _authority
-    ) BlackDaoAccessControlled(IBlackDaoAuthority(_authority)) {
+    ) OlympusAccessControlled(IOlympusAuthority(_authority)) {
         require(_treasury != address(0), "Zero address: Treasury");
         treasury = ITreasury(_treasury);
-        require(_blkd != address(0), "Zero address: BLKD");
-        blkd = IERC20(_blkd);
+        require(_ohm != address(0), "Zero address: OHM");
+        ohm = IERC20(_ohm);
         require(_staking != address(0), "Zero address: Staking");
         staking = _staking;
     }
@@ -125,7 +125,7 @@ contract Distributor is IDistributor, BlackDaoAccessControlled {
         @return uint
      */
     function nextRewardAt(uint256 _rate) public view override returns (uint256) {
-        return blkd.totalSupply().mul(_rate).div(rateDenominator);
+        return ohm.totalSupply().mul(_rate).div(rateDenominator);
     }
 
     /**

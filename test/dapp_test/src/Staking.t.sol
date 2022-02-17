@@ -8,12 +8,12 @@ import "../../../contracts/libraries/SafeMath.sol";
 import "../../../contracts/libraries/FixedPoint.sol";
 import "../../../contracts/libraries/FullMath.sol";
 import "../../../contracts/Staking.sol";
-import "../../../contracts/BlackDaoERC20.sol";
-import "../../../contracts/sBlackDaoERC20.sol";
-import "../../../contracts/governance/gBLKD.sol";
+import "../../../contracts/OlympusERC20.sol";
+import "../../../contracts/sOlympusERC20.sol";
+import "../../../contracts/governance/gOHM.sol";
 import "../../../contracts/Treasury.sol";
 import "../../../contracts/StakingDistributor.sol";
-import "../../../contracts/BlackDaoAuthority.sol";
+import "../../../contracts/OlympusAuthority.sol";
 
 import "./util/Hevm.sol";
 import "./util/MockContract.sol";
@@ -23,14 +23,14 @@ contract StakingTest is DSTest {
     using SafeMath for uint256;
     using SafeMath for uint112;
 
-    BlackDaoStaking internal staking;
-    BlackDaoTreasury internal treasury;
-    BlackDaoAuthority internal authority;
+    OlympusStaking internal staking;
+    OlympusTreasury internal treasury;
+    OlympusAuthority internal authority;
     Distributor internal distributor;
 
-    BlackDaoERC20Token internal blkd;
-    sBlackDao internal sblkd;
-    gBLKD internal gblkd;
+    OlympusERC20Token internal ohm;
+    sOlympus internal sohm;
+    gOHM internal gohm;
 
     MockContract internal mockToken;
 
@@ -53,40 +53,40 @@ contract StakingTest is DSTest {
         mockToken.givenMethodReturnUint(abi.encodeWithSelector(ERC20.decimals.selector), 18);
         mockToken.givenMethodReturnBool(abi.encodeWithSelector(IERC20.transferFrom.selector), true);
 
-        authority = new BlackDaoAuthority(address(this), address(this), address(this), address(this));
+        authority = new OlympusAuthority(address(this), address(this), address(this), address(this));
 
-        blkd = new BlackDaoERC20Token(address(authority));
-        gblkd = new gBLKD(address(this), address(this));
-        sblkd = new sBlackDao();
-        sblkd.setIndex(10);
-        sblkd.setgBLKD(address(gblkd));
+        ohm = new OlympusERC20Token(address(authority));
+        gohm = new gOHM(address(this), address(this));
+        sohm = new sOlympus();
+        sohm.setIndex(10);
+        sohm.setgOHM(address(gohm));
 
-        treasury = new BlackDaoTreasury(address(blkd), 1, address(authority));
+        treasury = new OlympusTreasury(address(ohm), 1, address(authority));
 
-        staking = new BlackDaoStaking(
-            address(blkd),
-            address(sblkd),
-            address(gblkd),
+        staking = new OlympusStaking(
+            address(ohm),
+            address(sohm),
+            address(gohm),
             EPOCH_LENGTH,
             START_TIME,
             NEXT_REBASE_TIME,
             address(authority)
         );
 
-        distributor = new Distributor(address(treasury), address(blkd), address(staking), address(authority));
+        distributor = new Distributor(address(treasury), address(ohm), address(staking), address(authority));
         distributor.setBounty(BOUNTY);
         staking.setDistributor(address(distributor));
-        treasury.enable(BlackDaoTreasury.STATUS.REWARDMANAGER, address(distributor), address(0)); // Allows distributor to mint blkd.
-        treasury.enable(BlackDaoTreasury.STATUS.RESERVETOKEN, address(mockToken), address(0)); // Allow mock token to be deposited into treasury
-        treasury.enable(BlackDaoTreasury.STATUS.RESERVEDEPOSITOR, address(this), address(0)); // Allow this contract to deposit token into treeasury
+        treasury.enable(OlympusTreasury.STATUS.REWARDMANAGER, address(distributor), address(0)); // Allows distributor to mint ohm.
+        treasury.enable(OlympusTreasury.STATUS.RESERVETOKEN, address(mockToken), address(0)); // Allow mock token to be deposited into treasury
+        treasury.enable(OlympusTreasury.STATUS.RESERVEDEPOSITOR, address(this), address(0)); // Allow this contract to deposit token into treeasury
 
-        sblkd.initialize(address(staking), address(treasury));
-        gblkd.migrate(address(staking), address(sblkd));
+        sohm.initialize(address(staking), address(treasury));
+        gohm.migrate(address(staking), address(sohm));
 
         // Give the treasury permissions to mint
         authority.pushVault(address(treasury), true);
 
-        // Deposit a token who's profit (3rd param) determines how much blkd the treasury can mint
+        // Deposit a token who's profit (3rd param) determines how much ohm the treasury can mint
         uint256 depositAmount = 20e18;
         treasury.deposit(depositAmount, address(mockToken), BOUNTY.mul(2)); // Mints (depositAmount- 2xBounty) for this contract
     }
@@ -109,32 +109,32 @@ contract StakingTest is DSTest {
     }
 
     function testStake() public {
-        blkd.approve(address(staking), AMOUNT);
+        ohm.approve(address(staking), AMOUNT);
         uint256 amountStaked = staking.stake(address(this), AMOUNT, true, true);
         assertEq(amountStaked, AMOUNT);
     }
 
-    function testStakeAtRebaseToGblkd() public {
+    function testStakeAtRebaseToGohm() public {
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
-        blkd.approve(address(staking), AMOUNT);
-        bool isSblkd = false;
+        ohm.approve(address(staking), AMOUNT);
+        bool isSohm = false;
         bool claim = true;
-        uint256 gBLKDRecieved = staking.stake(address(this), AMOUNT, isSblkd, claim);
+        uint256 gOHMRecieved = staking.stake(address(this), AMOUNT, isSohm, claim);
 
-        uint256 expectedAmount = gblkd.balanceTo(AMOUNT.add(BOUNTY));
-        assertEq(gBLKDRecieved, expectedAmount);
+        uint256 expectedAmount = gohm.balanceTo(AMOUNT.add(BOUNTY));
+        assertEq(gOHMRecieved, expectedAmount);
     }
 
     function testStakeAtRebase() public {
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
-        blkd.approve(address(staking), AMOUNT);
-        bool isSblkd = true;
+        ohm.approve(address(staking), AMOUNT);
+        bool isSohm = true;
         bool claim = true;
-        uint256 amountStaked = staking.stake(address(this), AMOUNT, isSblkd, claim);
+        uint256 amountStaked = staking.stake(address(this), AMOUNT, isSohm, claim);
 
         uint256 expectedAmount = AMOUNT.add(BOUNTY);
         assertEq(amountStaked, expectedAmount);
@@ -142,96 +142,96 @@ contract StakingTest is DSTest {
 
     function testUnstake() public {
         bool triggerRebase = true;
-        bool isSblkd = true;
+        bool isSohm = true;
         bool claim = true;
 
-        // Stake the blkd
-        uint256 initialBlkdBalance = blkd.balanceOf(address(this));
-        blkd.approve(address(staking), initialBlkdBalance);
-        uint256 amountStaked = staking.stake(address(this), initialBlkdBalance, isSblkd, claim);
-        assertEq(amountStaked, initialBlkdBalance);
+        // Stake the ohm
+        uint256 initialOhmBalance = ohm.balanceOf(address(this));
+        ohm.approve(address(staking), initialOhmBalance);
+        uint256 amountStaked = staking.stake(address(this), initialOhmBalance, isSohm, claim);
+        assertEq(amountStaked, initialOhmBalance);
 
         // Validate balances post stake
-        uint256 blkdBalance = blkd.balanceOf(address(this));
-        uint256 sBlkdBalance = sblkd.balanceOf(address(this));
-        assertEq(blkdBalance, 0);
-        assertEq(sBlkdBalance, initialBlkdBalance);
+        uint256 ohmBalance = ohm.balanceOf(address(this));
+        uint256 sOhmBalance = sohm.balanceOf(address(this));
+        assertEq(ohmBalance, 0);
+        assertEq(sOhmBalance, initialOhmBalance);
 
-        // Unstake sBLKD
-        sblkd.approve(address(staking), sBlkdBalance);
-        staking.unstake(address(this), sBlkdBalance, triggerRebase, isSblkd);
+        // Unstake sOHM
+        sohm.approve(address(staking), sOhmBalance);
+        staking.unstake(address(this), sOhmBalance, triggerRebase, isSohm);
 
         // Validate Balances post unstake
-        blkdBalance = blkd.balanceOf(address(this));
-        sBlkdBalance = sblkd.balanceOf(address(this));
-        assertEq(blkdBalance, initialBlkdBalance);
-        assertEq(sBlkdBalance, 0);
+        ohmBalance = ohm.balanceOf(address(this));
+        sOhmBalance = sohm.balanceOf(address(this));
+        assertEq(ohmBalance, initialOhmBalance);
+        assertEq(sOhmBalance, 0);
     }
 
     function testUnstakeAtRebase() public {
         bool triggerRebase = true;
-        bool isSblkd = true;
+        bool isSohm = true;
         bool claim = true;
 
-        // Stake the blkd
-        uint256 initialBlkdBalance = blkd.balanceOf(address(this));
-        blkd.approve(address(staking), initialBlkdBalance);
-        uint256 amountStaked = staking.stake(address(this), initialBlkdBalance, isSblkd, claim);
-        assertEq(amountStaked, initialBlkdBalance);
+        // Stake the ohm
+        uint256 initialOhmBalance = ohm.balanceOf(address(this));
+        ohm.approve(address(staking), initialOhmBalance);
+        uint256 amountStaked = staking.stake(address(this), initialOhmBalance, isSohm, claim);
+        assertEq(amountStaked, initialOhmBalance);
 
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
         // Validate balances post stake
-        // Post initial rebase, distribution amount is 0, so sBLKD balance doens't change.
-        uint256 blkdBalance = blkd.balanceOf(address(this));
-        uint256 sBlkdBalance = sblkd.balanceOf(address(this));
-        assertEq(blkdBalance, 0);
-        assertEq(sBlkdBalance, initialBlkdBalance);
+        // Post initial rebase, distribution amount is 0, so sOHM balance doens't change.
+        uint256 ohmBalance = ohm.balanceOf(address(this));
+        uint256 sOhmBalance = sohm.balanceOf(address(this));
+        assertEq(ohmBalance, 0);
+        assertEq(sOhmBalance, initialOhmBalance);
 
-        // Unstake sBLKD
-        sblkd.approve(address(staking), sBlkdBalance);
-        staking.unstake(address(this), sBlkdBalance, triggerRebase, isSblkd);
+        // Unstake sOHM
+        sohm.approve(address(staking), sOhmBalance);
+        staking.unstake(address(this), sOhmBalance, triggerRebase, isSohm);
 
         // Validate balances post unstake
-        blkdBalance = blkd.balanceOf(address(this));
-        sBlkdBalance = sblkd.balanceOf(address(this));
-        uint256 expectedAmount = initialBlkdBalance.add(BOUNTY); // Rebase earns a bounty
-        assertEq(blkdBalance, expectedAmount);
-        assertEq(sBlkdBalance, 0);
+        ohmBalance = ohm.balanceOf(address(this));
+        sOhmBalance = sohm.balanceOf(address(this));
+        uint256 expectedAmount = initialOhmBalance.add(BOUNTY); // Rebase earns a bounty
+        assertEq(ohmBalance, expectedAmount);
+        assertEq(sOhmBalance, 0);
     }
 
-    function testUnstakeAtRebaseFromGblkd() public {
+    function testUnstakeAtRebaseFromGohm() public {
         bool triggerRebase = true;
-        bool isSblkd = false;
+        bool isSohm = false;
         bool claim = true;
 
-        // Stake the blkd
-        uint256 initialBlkdBalance = blkd.balanceOf(address(this));
-        blkd.approve(address(staking), initialBlkdBalance);
-        uint256 amountStaked = staking.stake(address(this), initialBlkdBalance, isSblkd, claim);
-        uint256 gblkdAmount = gblkd.balanceTo(initialBlkdBalance);
-        assertEq(amountStaked, gblkdAmount);
+        // Stake the ohm
+        uint256 initialOhmBalance = ohm.balanceOf(address(this));
+        ohm.approve(address(staking), initialOhmBalance);
+        uint256 amountStaked = staking.stake(address(this), initialOhmBalance, isSohm, claim);
+        uint256 gohmAmount = gohm.balanceTo(initialOhmBalance);
+        assertEq(amountStaked, gohmAmount);
 
         // test the unstake
         // Move into next rebase window
         hevm.warp(EPOCH_LENGTH);
 
         // Validate balances post-stake
-        uint256 blkdBalance = blkd.balanceOf(address(this));
-        uint256 gblkdBalance = gblkd.balanceOf(address(this));
-        assertEq(blkdBalance, 0);
-        assertEq(gblkdBalance, gblkdAmount);
+        uint256 ohmBalance = ohm.balanceOf(address(this));
+        uint256 gohmBalance = gohm.balanceOf(address(this));
+        assertEq(ohmBalance, 0);
+        assertEq(gohmBalance, gohmAmount);
 
-        // Unstake gBLKD
-        gblkd.approve(address(staking), gblkdBalance);
-        staking.unstake(address(this), gblkdBalance, triggerRebase, isSblkd);
+        // Unstake gOHM
+        gohm.approve(address(staking), gohmBalance);
+        staking.unstake(address(this), gohmBalance, triggerRebase, isSohm);
 
         // Validate balances post unstake
-        blkdBalance = blkd.balanceOf(address(this));
-        gblkdBalance = gblkd.balanceOf(address(this));
-        uint256 expectedBlkd = initialBlkdBalance.add(BOUNTY); // Rebase earns a bounty
-        assertEq(blkdBalance, expectedBlkd);
-        assertEq(gblkdBalance, 0);
+        ohmBalance = ohm.balanceOf(address(this));
+        gohmBalance = gohm.balanceOf(address(this));
+        uint256 expectedOhm = initialOhmBalance.add(BOUNTY); // Rebase earns a bounty
+        assertEq(ohmBalance, expectedOhm);
+        assertEq(gohmBalance, 0);
     }
 }

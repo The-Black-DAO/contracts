@@ -1,7 +1,7 @@
 {
-  "name": "black-contracts",
+  "name": "olympus-contracts",
   "version": "1.0.0",
-  "description": "Smart Contracts for BlackDao",
+  "description": "Smart Contracts for Olympus",
   "directories": {
     "test": "test"
   },
@@ -10,9 +10,13 @@
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
-    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
+    "@nomiclabs/hardhat-ethers": "2.0.4",
     "@nomiclabs/hardhat-etherscan": "^2.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@openzeppelin/contracts": "^4.4.2",
+    "@openzeppelin/contracts-upgradeable": "^3.4.2",
+    "@openzeppelin/hardhat-upgrades": "^1.12.0",
+    "@rari-capital/solmate": "^6.2.0",
     "@typechain/ethers-v5": "^7.1.2",
     "@typechain/hardhat": "^2.3.0",
     "@types/chai": "^4.2.22",
@@ -48,6 +52,8 @@
     "format": "prettier --check \"**/*.{ts,js,sol}\"",
     "format:fix": "prettier --write \"**/*.{ts,js,sol}\"",
     "compile": "hardhat compile",
+    "clean": "hardhat clean",
+    "void:deploy": "hardhat deploy",
     "test": "hardhat test",
     "gas": "REPORT_GAS=true hardhat test",
     "coverage": "HARDHAT_DEPLOY_FIXTURE=true hardhat coverage",
@@ -60,15 +66,17 @@
     "sourcify:mainnet": "hardhat --network mainnet sourcify",
     "sourcify:rinkeby": "hardhat --network rinkeby sourcify",
     "etherscan:mainnet": "hardhat --network mainnet etherscan-verify",
-    "etherscan:rinkeby": "hardhat --network rinkeby etherscan-verify"
+    "etherscan:rinkeby": "hardhat --network rinkeby etherscan-verify",
+    "prestart": "yarn run typechain",
+    "start": "hardhat node --network hardhat"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BlackDaoDAO/black-contracts.git"
+    "url": "git+https://github.com/OlympusDAO/olympus-contracts.git"
   },
   "author": "",
   "bugs": {
-    "url": "https://github.com/BlackDaoDAO/black-contracts/issues"
+    "url": "https://github.com/OlympusDAO/olympus-contracts/issues"
   },
-  "homepage": "https://github.com/BlackDaoDAO/black-contracts#readme"
+  "homepage": "https://github.com/OlympusDAO/olympus-contracts#readme"
 }

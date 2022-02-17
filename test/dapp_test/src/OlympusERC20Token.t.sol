@@ -2,32 +2,30 @@
 pragma solidity 0.7.5;
 
 import "ds-test/test.sol"; // ds-test
-import "../../../contracts/BlackDaoERC20.sol";
+import "../../../contracts/OlympusERC20.sol";
 
-import "../../../contracts/BlackDaoAuthority.sol";
-
+import "../../../contracts/OlympusAuthority.sol";
 
 contract OlymppusERC20TokenTest is DSTest {
-    BlackDaoERC20Token internal blkdContract;
+    OlympusERC20Token internal ohmContract;
 
-    IBlackDaoAuthority internal authority;
+    IOlympusAuthority internal authority;
 
     address internal UNAUTHORIZED_USER = address(0x1);
 
-
     function test_erc20() public {
-        authority = new BlackDaoAuthority(address(this), address(this), address(this), address(this));
-        blkdContract = new BlackDaoERC20Token(address(authority));
-        assertEq("BlackDao", blkdContract.name());
-        assertEq("BLKD", blkdContract.symbol());
-        assertEq(9, int(blkdContract.decimals()));
+        authority = new OlympusAuthority(address(this), address(this), address(this), address(this));
+        ohmContract = new OlympusERC20Token(address(authority));
+        assertEq("Olympus", ohmContract.name());
+        assertEq("OHM", ohmContract.symbol());
+        assertEq(9, int256(ohmContract.decimals()));
     }
 
     function testCannot_mint() public {
-        authority = new BlackDaoAuthority(address(this), address(this), address(this), UNAUTHORIZED_USER);
-        blkdContract = new BlackDaoERC20Token(address(authority));
+        authority = new OlympusAuthority(address(this), address(this), address(this), UNAUTHORIZED_USER);
+        ohmContract = new OlympusERC20Token(address(authority));
         // try/catch block pattern copied from https://github.com/Anish-Agnihotri/MultiRaffle/blob/master/src/test/utils/DSTestExtended.sol
-        try blkdContract.mint(address(this), 100) {
+        try ohmContract.mint(address(this), 100) {
             fail();
         } catch Error(string memory error) {
             // Assert revert error matches expected message
@@ -37,27 +35,27 @@ contract OlymppusERC20TokenTest is DSTest {
 
     // Tester will pass it's own parameters, see https://fv.ethereum.org/2020/12/11/symbolic-execution-with-ds-test/
     function test_mint(uint256 amount) public {
-        authority = new BlackDaoAuthority(address(this), address(this), address(this), address(this));
-        blkdContract = new BlackDaoERC20Token(address(authority));
-        uint256 supplyBefore = blkdContract.totalSupply();
-         // TODO look into https://dapphub.chat/channel/dev?msg=HWrPJqxp8BHMiKTbo
-        // blkdContract.setVault(address(this)); //TODO WTF msg.sender doesn't propigate from .dapprc $DAPP_TEST_CALLER config via mint() call, must use this value
-        blkdContract.mint(address(this), amount);
-        assertEq(supplyBefore + amount, blkdContract.totalSupply());
+        authority = new OlympusAuthority(address(this), address(this), address(this), address(this));
+        ohmContract = new OlympusERC20Token(address(authority));
+        uint256 supplyBefore = ohmContract.totalSupply();
+        // TODO look into https://dapphub.chat/channel/dev?msg=HWrPJqxp8BHMiKTbo
+        // ohmContract.setVault(address(this)); //TODO WTF msg.sender doesn't propigate from .dapprc $DAPP_TEST_CALLER config via mint() call, must use this value
+        ohmContract.mint(address(this), amount);
+        assertEq(supplyBefore + amount, ohmContract.totalSupply());
     }
 
     // Tester will pass it's own parameters, see https://fv.ethereum.org/2020/12/11/symbolic-execution-with-ds-test/
     function test_burn(uint256 mintAmount, uint256 burnAmount) public {
-        authority = new BlackDaoAuthority(address(this), address(this), address(this), address(this));
-        blkdContract = new BlackDaoERC20Token(address(authority));
-        uint256 supplyBefore = blkdContract.totalSupply();
-        // blkdContract.setVault(address(this));  //TODO WTF msg.sender doesn't propigate from .dapprc $DAPP_TEST_CALLER config via mint() call, must use this value
-        blkdContract.mint(address(this), mintAmount);
-        if (burnAmount <= mintAmount){
-            blkdContract.burn(burnAmount);
-            assertEq(supplyBefore + mintAmount - burnAmount, blkdContract.totalSupply());
+        authority = new OlympusAuthority(address(this), address(this), address(this), address(this));
+        ohmContract = new OlympusERC20Token(address(authority));
+        uint256 supplyBefore = ohmContract.totalSupply();
+        // ohmContract.setVault(address(this));  //TODO WTF msg.sender doesn't propigate from .dapprc $DAPP_TEST_CALLER config via mint() call, must use this value
+        ohmContract.mint(address(this), mintAmount);
+        if (burnAmount <= mintAmount) {
+            ohmContract.burn(burnAmount);
+            assertEq(supplyBefore + mintAmount - burnAmount, ohmContract.totalSupply());
         } else {
-            try blkdContract.burn(burnAmount) {
+            try ohmContract.burn(burnAmount) {
                 fail();
             } catch Error(string memory error) {
                 // Assert revert error matches expected message
