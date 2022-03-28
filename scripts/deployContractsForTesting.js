@@ -141,6 +141,85 @@ async function main() {
 
     await distributor.addRecipient(staking.address, "4000");
     console.log("Distributor Add Recipient:", 4000);
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    let liquidityAmountBLKD = "100000000000000000000000";
+    let liquidityAmountDAI = "1000000000000000000000000000000000000";
+    let liquidityAmountFRAX = "1000000000000000000000000000000000000";
+    let deadline = new Date().getTime();
+    deadline += (60 * 60 * 1000);
+    let LP_ROUTER = await ethers.getContractAt("IUniswapV2Router",sushiRouterV2);
+    let WETH = await LP_ROUTER.WETH();
+    let FACTORY = await LP_ROUTER.factory();
+    let LP_FACTORY = await ethers.getContractAt("IUniswapV2Factory", FACTORY);
+
+    await dai.approve(sushiRouterV2,liquidityAmountDAI);
+    await blkd.approve(sushiRouterV2,liquidityAmountBLKD);
+    await LP_FACTORY.createPair(
+        blkd.address,
+        dai.address
+    )
+    // await LP_ROUTER.addLiquidity(
+    //     blkd.address,
+    //     dai.address,
+    //     liquidityAmountBLKD,
+    //     liquidityAmountDAI,
+    //     0,
+    //     0,
+    //     deployer.address,
+    //     deadline
+    // );
+    let BLKD_DAI_PAIR_RETURNED = await LP_FACTORY.getPair(
+        blkd.address,
+        dai.address
+    );
+    console.log("BLKD_DAI_LP Pair:", BLKD_DAI_PAIR_RETURNED);
+
+    await frax.approve(sushiRouterV2,liquidityAmountFRAX);
+    await blkd.approve(sushiRouterV2,liquidityAmountBLKD);
+    await LP_FACTORY.createPair(
+        blkd.address,
+        frax.address
+    )
+    // await LP_ROUTER.addLiquidity(
+    //     blkd.address,
+    //     frax.address,
+    //     liquidityAmountBLKD,
+    //     liquidityAmountFRAX,
+    //     0,
+    //     0,
+    //     deployer.address,
+    //     deadline
+    // );
+    let BLKD_FRAX_PAIR_RETURNED = await LP_FACTORY.getPair(
+        blkd.address,
+        frax.address
+    );
+    console.log("BLKD_FRAX_LP Pair:",BLKD_FRAX_PAIR_RETURNED);
+
+    await blkd.approve(sushiRouterV2,liquidityAmountBLKD);
+    await LP_FACTORY.createPair(
+        WETH,
+        blkd.address
+    )
+    // let options = {value: ethers.utils.parseEther("0.10")}
+    // await LP_ROUTER.addLiquidityETH(
+    //     blkd.address,
+    //     liquidityAmountBLKD,
+    //     0,
+    //     0,
+    //     deployer.address,
+    //     deadline
+    // , options );
+
+    let BLKD_ETH_PAIR_RETURNED = await LP_FACTORY.getPair(
+        WETH,
+        blkd.address
+    );
+    console.log("BLKD_ETH_LP Pair:",BLKD_ETH_PAIR_RETURNED);
+
+    ////////////////////////////////////////////////////////////////
     
     ////////////////////////////////////////////////////////////////////////////////
 

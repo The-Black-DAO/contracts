@@ -23,6 +23,10 @@ async function main() {
     const frontEndReward = "1"; 
     const daoReward = "1";
 
+    const sushiRouterV2 = "ENTER SUSHI SWAP ROUTER";
+    const dai = await ethers.getContractAt("DAI","ENTER DAI ADDRESS");
+    const frax = await ethers.getContractAt("FRAX","ENTER FRAX ADDRESS");
+
     const Authority = await ethers.getContractFactory("OlympusAuthority");
     const authority = await Authority.deploy(
         deployer.address,
@@ -92,16 +96,6 @@ async function main() {
     await bondDepository.deployed();
     console.log("bondDepository: ", bondDepository.address);
 
-    const DAI = await ethers.getContractFactory("DAI");
-    const dai = await DAI.deploy(chainID);
-    await dai.deployed();
-    console.log("DAI: ", dai.address);
-
-    const FRAX = await ethers.getContractFactory("FRAX");
-    const frax = await FRAX.deploy(chainID);
-    await frax.deployed();
-    console.log("FRAX: ", frax.address);
-
     const YieldDirector = await ethers.getContractFactory("YieldDirector");
     const yieldDirector = await YieldDirector.deploy(
         sblkd.address,
@@ -130,12 +124,6 @@ async function main() {
     await staking.setWarmupLength(warmupPeriod);
     console.log("setDistributor for Staking:", warmupPeriod);
 
-    await dai.mint(deployer.address, "100000000000000000000000000000000000000")
-    console.log("Minted DAI: ", "100000000000000000000");
-
-    await frax.mint(deployer.address, "100000000000000000000000000000000000000")
-    console.log("Minted FRAX: ", "100000000000000000000");
-
     await distributor.setBounty("100");
     console.log("Distributor Bounty Set: ", 100);
 
@@ -143,6 +131,83 @@ async function main() {
     console.log("Distributor Add Recipient:", 4000);
     
     ////////////////////////////////////////////////////////////////////////////////
+
+    let liquidityAmountBLKD = "100000000000000000000000";
+    let liquidityAmountDAI = "1000000000000000000000000000000000000";
+    let liquidityAmountFRAX = "1000000000000000000000000000000000000";
+    let deadline = new Date().getTime();
+    deadline += (60 * 60 * 1000);
+    let LP_ROUTER = await ethers.getContractAt("IUniswapV2Router",sushiRouterV2);
+    let WETH = await LP_ROUTER.WETH();
+    let FACTORY = await LP_ROUTER.factory();
+    let LP_FACTORY = await ethers.getContractAt("IUniswapV2Factory", FACTORY);
+
+    await dai.approve(sushiRouterV2,liquidityAmountDAI);
+    await blkd.approve(sushiRouterV2,liquidityAmountBLKD);
+    await LP_FACTORY.createPair(
+        blkd.address,
+        dai.address
+    )
+    // await LP_ROUTER.addLiquidity(
+    //     blkd.address,
+    //     dai.address,
+    //     liquidityAmountBLKD,
+    //     liquidityAmountDAI,
+    //     0,
+    //     0,
+    //     deployer.address,
+    //     deadline
+    // );
+    let BLKD_DAI_PAIR_RETURNED = await LP_FACTORY.getPair(
+        blkd.address,
+        dai.address
+    );
+    console.log("BLKD_DAI_LP Pair:", BLKD_DAI_PAIR_RETURNED);
+
+    await frax.approve(sushiRouterV2,liquidityAmountFRAX);
+    await blkd.approve(sushiRouterV2,liquidityAmountBLKD);
+    await LP_FACTORY.createPair(
+        blkd.address,
+        frax.address
+    )
+    // await LP_ROUTER.addLiquidity(
+    //     blkd.address,
+    //     frax.address,
+    //     liquidityAmountBLKD,
+    //     liquidityAmountFRAX,
+    //     0,
+    //     0,
+    //     deployer.address,
+    //     deadline
+    // );
+    let BLKD_FRAX_PAIR_RETURNED = await LP_FACTORY.getPair(
+        blkd.address,
+        frax.address
+    );
+    console.log("BLKD_FRAX_LP Pair:",BLKD_FRAX_PAIR_RETURNED);
+
+    await blkd.approve(sushiRouterV2,liquidityAmountBLKD);
+    await LP_FACTORY.createPair(
+        WETH,
+        blkd.address
+    )
+    // let options = {value: ethers.utils.parseEther("0.10")}
+    // await LP_ROUTER.addLiquidityETH(
+    //     blkd.address,
+    //     liquidityAmountBLKD,
+    //     0,
+    //     0,
+    //     deployer.address,
+    //     deadline
+    // , options );
+
+    let BLKD_ETH_PAIR_RETURNED = await LP_FACTORY.getPair(
+        WETH,
+        blkd.address
+    );
+    console.log("BLKD_ETH_LP Pair:",BLKD_ETH_PAIR_RETURNED);
+
+    ////////////////////////////////////////////////////////////////
 
     await authority.pushVault(treasury.address, true);
     console.log("Authority Vault Pushed: ", treasury.address);
@@ -172,56 +237,56 @@ async function main() {
 
     await treasury.enable(9, sblkd.address, deadAddress);
 
-    // Deposit and Mint blkd
-    const daiAmount = "100000000000000000000000000000000"
-    await dai.approve(treasury.address, daiAmount); // Approve treasury to use the DAI
-    console.log("DAI Approved to treasury :", daiAmount);
-    await treasury.deposit(daiAmount, dai.address, "0"); // Deposit DAI into treasury
-    console.log("DAI Deposited in treasury :", daiAmount);
-    const blkdMintedAgainstDai = await blkd.balanceOf(deployer.address);
-    console.log("BLKD minted against DAI: ", blkdMintedAgainstDai.toString());
+    // // Deposit and Mint blkd
+    // const daiAmount = "Enter WEI Amount to Deposit DAI"
+    // await dai.approve(treasury.address, daiAmount); // Approve treasury to use the DAI
+    // console.log("DAI Approved to treasury :", daiAmount);
+    // await treasury.deposit(daiAmount, dai.address, "0"); // Deposit DAI into treasury
+    // console.log("DAI Deposited in treasury :", daiAmount);
+    // const blkdMintedAgainstDai = await blkd.balanceOf(deployer.address);
+    // console.log("BLKD minted against DAI: ", blkdMintedAgainstDai.toString());
 
-    const fraxAmount = "100000000000000000000000000000000"
-    await frax.approve(treasury.address, fraxAmount); // Approve treasury to use the FRAX
-    console.log("FRAX Approved to treasury :", fraxAmount);
-    await treasury.deposit(fraxAmount, frax.address, "0"); // Deposit FRAX into treasury
-    console.log("FRAX Deposited in treasury :", fraxAmount);
-    const blkdMintedAgainstFrax = await blkd.balanceOf(deployer.address);
-    console.log("BLKD minted against FRAX: ", blkdMintedAgainstFrax.toString());
+    // const fraxAmount = "Enter WEI Amount to Deposit FRAX"
+    // await frax.approve(treasury.address, fraxAmount); // Approve treasury to use the FRAX
+    // console.log("FRAX Approved to treasury :", fraxAmount);
+    // await treasury.deposit(fraxAmount, frax.address, "0"); // Deposit FRAX into treasury
+    // console.log("FRAX Deposited in treasury :", fraxAmount);
+    // const blkdMintedAgainstFrax = await blkd.balanceOf(deployer.address);
+    // console.log("BLKD minted against FRAX: ", blkdMintedAgainstFrax.toString());
 
-    // Deposit Excess Reserves 
-    const daiAmountForReserves = "100000000000000000000000000000000"
-    await dai.approve(treasury.address, daiAmountForReserves); // Approve treasury to use the DAI
-    console.log("DAI Approved to treasury :", daiAmountForReserves);
-    await treasury.deposit(daiAmountForReserves, dai.address, "100000000000000000000000"); // Deposit DAI into treasury
-    console.log("DAI Deposited in treasury :", daiAmountForReserves);
+    // // Deposit Excess Reserves 
+    // const daiAmountForReserves = "Enter WEI Amount to Deposit DAI"
+    // await dai.approve(treasury.address, daiAmountForReserves); // Approve treasury to use the DAI
+    // console.log("DAI Approved to treasury :", daiAmountForReserves);
+    // await treasury.deposit(daiAmountForReserves, dai.address, "Enter WEI Amount to Deposit DAI"); // Deposit DAI into treasury
+    // console.log("DAI Deposited in treasury :", daiAmountForReserves);
 
-    const fraxAmountForReserves = "100000000000000000000000000000000"
-    await frax.approve(treasury.address, fraxAmountForReserves); // Approve treasury to use the FRAX
-    console.log("FRAX Approved to treasury :", fraxAmountForReserves);
-    await treasury.deposit(fraxAmountForReserves, frax.address, "100000000000000000000000"); // Deposit FRAX into treasury
-    console.log("FRAX Deposited in treasury :", fraxAmountForReserves);
+    // const fraxAmountForReserves = "Enter Amount to Deposit FRAX"
+    // await frax.approve(treasury.address, fraxAmountForReserves); // Approve treasury to use the FRAX
+    // console.log("FRAX Approved to treasury :", fraxAmountForReserves);
+    // await treasury.deposit(fraxAmountForReserves, frax.address, "Enter WEI Amount to Deposit FRAX"); // Deposit FRAX into treasury
+    // console.log("FRAX Deposited in treasury :", fraxAmountForReserves);
 
     ////////////////////////////////////////////////////////////
     // BONDS
 
-    await bondDepository.create(
-        dai.address,
-        ["100000000000000000000000","1000000000","10000"],
-        [true,true],
-        [vestingTimeInSeconds,conclusionTime],
-        [depositIntervalsInSeconds,tuneIntervalsInSeconds]
-    )
-    console.log("DAI BOND CREATED")
+    // await bondDepository.create(
+    //     dai.address,
+    //     ["100000000000000000000000","1000000000","10000"],
+    //     [true,true],
+    //     [vestingTimeInSeconds,conclusionTime],
+    //     [depositIntervalsInSeconds,tuneIntervalsInSeconds]
+    // )
+    // console.log("DAI BOND CREATED")
 
-    await bondDepository.create(
-        frax.address,
-        ["100000000000000000000000","1000000000","10000"],
-        [true,true],
-        [vestingTimeInSeconds,conclusionTime],
-        [depositIntervalsInSeconds,tuneIntervalsInSeconds]
-    )
-    console.log("FRAX BOND CREATED")
+    // await bondDepository.create(
+    //     frax.address,
+    //     ["100000000000000000000000","1000000000","10000"],
+    //     [true,true],
+    //     [vestingTimeInSeconds,conclusionTime],
+    //     [depositIntervalsInSeconds,tuneIntervalsInSeconds]
+    // )
+    // console.log("FRAX BOND CREATED")
 
     await bondDepository.whitelist(frontEndRewarder);
     await bondDepository.setRewards(frontEndReward, daoReward);
