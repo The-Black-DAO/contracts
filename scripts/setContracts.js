@@ -18,9 +18,9 @@ async function main() {
     const mainWallet = { address: "0x9BaCec4035CfB75b6c2D02220593F44F847d53C9" };
     const preMintAmount = "5000000000000000";
 
-    const authorityAddress = "";
-    const blkdAddress = "";
-    const sblkdAddress = "";
+    const authorityAddress = "0x12275F627852aACa259B6752BdC8e60FC28EEca6";
+    const blkdAddress = "0xe7DA1d8327AE1F320BbC23ca119b02AD3f85dceB";
+    const sblkdAddress = "0x76B7B4062d7b518C79f324b6F1f9Cc4E10ABD27F";
     const treasuryAddress = "";
     const gblkdAddress = "";
     const stakingAddress = "";
@@ -187,94 +187,8 @@ async function main() {
 
     ////////////////////////////////////////////////////////////////////////////////
 
-    try {
-        await hre.run("verify:verify", {
-            address: authority.address,
-            constructorArguments: [
-                deployer.address,
-                deployer.address,
-                deployer.address,
-                deployer.address,
-            ],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: blkd.address,
-            constructorArguments: [authority.address],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: sblkd.address,
-            constructorArguments: [],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: treasury.address,
-            constructorArguments: [blkd.address, timelock, authority.address],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: gblkd.address,
-            constructorArguments: [deployer.address, sblkd.address],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: staking.address,
-            constructorArguments: [
-                blkd.address,
-                sblkd.address,
-                gblkd.address,
-                epochLength,
-                firstEpochNumber,
-                firstEpochTime,
-                authority.address
-            ],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: distributor.address,
-            constructorArguments: [
-                treasury.address,
-                blkd.address,
-                staking.address,
-                authority.address
-            ],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: bondingCalculator.address,
-            constructorArguments: [blkd.address],
-        });
-    } catch (error) {}
-
-    try {
-        await hre.run("verify:verify", {
-            address: bondDepository.address,
-            constructorArguments: [
-                authority.address,
-                blkd.address,
-                gblkd.address,
-                staking.address,
-                treasury.address
-            ],
-        });
-    } catch (error) {}
-
-    console.log("All contracts verified successfully");
+    console.log("All contracts set successfully");
+    
 }
 
 main()

@@ -77,8 +77,7 @@ const config: HardhatUserConfig = {
                         bytecodeHash: "none",
                     },
                     optimizer: {
-                        enabled: true,
-                        runs: 800,
+                        enabled: false
                     },
                 },
             },
@@ -90,7 +89,18 @@ const config: HardhatUserConfig = {
                     },
                     optimizer: {
                         enabled: true,
-                        runs: 800,
+                        runs: 200
+                    },
+                },
+            },
+            {
+                version: "0.7.5",
+                settings: {
+                    metadata: {
+                        bytecodeHash: "none",
+                    },
+                    optimizer: {
+                        enabled: false
                     },
                 },
             },
@@ -102,22 +112,54 @@ const config: HardhatUserConfig = {
                     },
                     optimizer: {
                         enabled: true,
-                        runs: 800,
+                        runs: 200
                     },
                 },
             },
             {
-                version: "0.5.16",
+                version: "0.7.6",
+                settings: {
+                    metadata: {
+                        bytecodeHash: "none",
+                    },
+                    optimizer: {
+                        enabled: false
+                    },
+                },
             },
             {
-                version: "0.8.10",
+                version: "0.7.6",
                 settings: {
                     metadata: {
                         bytecodeHash: "none",
                     },
                     optimizer: {
                         enabled: true,
-                        runs: 800,
+                        runs: 200,
+                    },
+                },
+            },
+            {
+                version: "0.8.7",
+                settings: {
+                    metadata: {
+                        bytecodeHash: "none",
+                    },
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
+            {
+                version: "0.8.7",
+                settings: {
+                    metadata: {
+                        bytecodeHash: "none",
+                    },
+                    optimizer: {
+                        enabled: false,
+                        runs: 200,
                     },
                 },
             },
