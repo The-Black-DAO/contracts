@@ -3,6 +3,7 @@ const hre = require("hardhat");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
+    console.log("deployer", deployer.address);
 
     const timelock = "0";
     const epochLength = "28800";

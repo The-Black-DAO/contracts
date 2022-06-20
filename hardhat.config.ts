@@ -35,8 +35,7 @@ function getChainConfig(network: keyof typeof chainIds): NetworkUserConfig {
     return {
         accounts: [`${privateKey}`],
         chainId: chainIds[network],
-        url,
-        gas: 3500000,
+        url
     };
 }
 

@@ -3,7 +3,7 @@ const hre = require("hardhat");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
-    console.log("Deploying contracts with the account: " + deployer.address);
+    console.log("Setting contracts with the account: " + deployer.address);
 
     const timelock = "0";
     const epochLength = "28800";
@@ -15,7 +15,7 @@ async function main() {
     const sushiRouterV2 = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F";
     const dai = { address: "0x6b175474e89094c44da98b954eedeac495271d0f" };
     
-    const mainWallet = { address: "0x9BaCec4035CfB75b6c2D02220593F44F847d53C9" };
+    const mainWallet = { address: "0x5c656F5e8c44f6Df504DFb3E224E7f01310Aa52c" };
     const preMintAmount = "5000000000000000";
 
     const authorityAddress = "0x12275F627852aACa259B6752BdC8e60FC28EEca6";
