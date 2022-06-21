@@ -1,8 +1,0 @@
-*.*
-
-!hardhat.config.ts
-!package.json
-!yarn.lock
-!contracts
-!scripts
-!deployment/localhost
