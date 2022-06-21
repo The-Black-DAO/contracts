@@ -9,8 +9,8 @@ import "./interfaces/IERC20Metadata.sol";
 import "./interfaces/IBondDepository.sol";
 
 /// @title BlackDAO Bond Depository V2
-/// @author Zeus, Indigo
-/// Review by: JeffX
+/// @author Sheikh
+/// Review by: Kashmiri
 
 contract BlackDAOBondDepositoryV2 is IBondDepository, NoteKeeper {
     /* ======== DEPENDENCIES ======== */
