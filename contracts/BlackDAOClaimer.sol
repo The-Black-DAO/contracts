@@ -181,11 +181,11 @@ contract BlackDAOClaimer is Ownable {
         emit Whitelisted(user, amount);
     }
 
-    function addToWhitelist(address user, uint256 amount) external onlyOwner {
+    function addToWhitelist(address user, uint256 amount) public onlyOwner {
         _addToWhitelist(user, amount);
     }
 
-    function addToWhitelistBatch(address[] memory users, uint256[] memory amounts) external onlyOwner {
+    function addToWhitelistBatch(address[] memory users, uint256[] memory amounts) public onlyOwner {
         require(users.length == amounts.length, "BlackDAOClaimer: Incorrect length of arguments");
 
         for (uint256 i = 0 ; i < users.length ; i++ ) {            
@@ -193,7 +193,7 @@ contract BlackDAOClaimer is Ownable {
         }
     }
 
-    function claim() external {
+    function claim() public {
         require(whitelisted[msg.sender] == true, "Wallet Not Whitelisted");
         require(alreadyClaimed[msg.sender] == false, "Wallet Has Already Claimed");
 
@@ -207,7 +207,7 @@ contract BlackDAOClaimer is Ownable {
     /*
      * @dev used to withdraw token balance of this contract back to the owner
      */
-    function withdraw() external onlyOwner {
+    function withdraw() public onlyOwner {
         token.transfer(owner(), token.balanceOf(address(this)));
     }
 }
