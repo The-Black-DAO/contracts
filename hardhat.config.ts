@@ -76,17 +76,6 @@ const config: HardhatUserConfig = {
                         bytecodeHash: "none",
                     },
                     optimizer: {
-                        enabled: false
-                    },
-                },
-            },
-            {
-                version: "0.8.10",
-                settings: {
-                    metadata: {
-                        bytecodeHash: "none",
-                    },
-                    optimizer: {
                         enabled: true,
                         runs: 200
                     },
@@ -99,30 +88,8 @@ const config: HardhatUserConfig = {
                         bytecodeHash: "none",
                     },
                     optimizer: {
-                        enabled: false
-                    },
-                },
-            },
-            {
-                version: "0.7.5",
-                settings: {
-                    metadata: {
-                        bytecodeHash: "none",
-                    },
-                    optimizer: {
                         enabled: true,
                         runs: 200
-                    },
-                },
-            },
-            {
-                version: "0.7.6",
-                settings: {
-                    metadata: {
-                        bytecodeHash: "none",
-                    },
-                    optimizer: {
-                        enabled: false
                     },
                 },
             },
@@ -146,18 +113,6 @@ const config: HardhatUserConfig = {
                     },
                     optimizer: {
                         enabled: true,
-                        runs: 200,
-                    },
-                },
-            },
-            {
-                version: "0.8.7",
-                settings: {
-                    metadata: {
-                        bytecodeHash: "none",
-                    },
-                    optimizer: {
-                        enabled: false,
                         runs: 200,
                     },
                 },
