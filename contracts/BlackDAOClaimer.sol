@@ -1,6 +1,8 @@
 pragma solidity ^0.8.10;
 // SPDX-License-Identifier: NONE
 
+import "../cryptography/MerkleProof.sol";
+
 /*
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -160,13 +162,12 @@ interface IERC20 {
 
 contract BlackDAOClaimer is Ownable {
 
+    bytes32 public root = 0xfeab6d8e5dda715b948710976568b460e0f2ebcb9f63ac6a8e69344ec824cabe; 
+
     IERC20 public token;
 
-    mapping (address => uint256) public claimAmount;
-    mapping (address => bool) public whitelisted;
     mapping (address => bool) public alreadyClaimed;
 
-    event Whitelisted(address user, uint256 value);
     event Claimed (address user, uint256 value);
 
     // constructor
@@ -174,34 +175,15 @@ contract BlackDAOClaimer is Ownable {
         token = IERC20(_token);
     }
 
-    function _addToWhitelist(address user, uint256 amount) internal {
-        require (whitelisted[user] == false, "User has already been whitelisted");
-        claimAmount[user] = amount;
-        whitelisted[user] = true;
-        emit Whitelisted(user, amount);
-    }
-
-    function addToWhitelist(address user, uint256 amount) public onlyOwner {
-        _addToWhitelist(user, amount);
-    }
-
-    function addToWhitelistBatch(address[] memory users, uint256[] memory amounts) public onlyOwner {
-        require(users.length == amounts.length, "BlackDAOClaimer: Incorrect length of arguments");
-
-        for (uint256 i = 0 ; i < users.length ; i++ ) {            
-            _addToWhitelist(users[i], amounts[i]);
-        }
-    }
-
-    function claim() public {
-        require(whitelisted[msg.sender] == true, "Wallet Not Whitelisted");
+    function claim(bytes32[] calldata _merkleProof, uint256 amount) public {
         require(alreadyClaimed[msg.sender] == false, "Wallet Has Already Claimed");
 
-        uint256 toClaim = claimAmount[msg.sender];
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender,amount));
+        require(MerkleProof.verify(_merkleProof, root, leaf), "Incorrect proof");
+        
         alreadyClaimed[msg.sender] = true;
-        claimAmount[msg.sender] = 0;
-        token.transfer(msg.sender, toClaim);
-        emit Claimed(msg.sender, toClaim);
+        token.transfer(msg.sender, amount);
+        emit Claimed(msg.sender, amount);
     }
 
     /*

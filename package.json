@@ -6,7 +6,12 @@
     "test": "test"
   },
   "dependencies": {
-    "@uniswap/v3-periphery": "^1.2.0"
+    "@uniswap/v3-periphery": "^1.2.0",
+    "csv-parser": "^3.0.0",
+    "csvtojson": "^2.0.10",
+    "merkletreejs": "^0.2.32",
+    "web3": "^1.7.4",
+    "web3-eth-ens": "^1.7.4"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
